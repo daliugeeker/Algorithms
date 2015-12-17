@@ -1,5 +1,5 @@
 /*
- * NonBlockingConcurrentQueue.c
+ * Multi-thread Single Queue Operations.c
  *
  *  Created on: Dec 11, 2015
  *      Author: liuda
