@@ -4,7 +4,6 @@
  *  Created on: Dec 11, 2015
  *      Author: liuda
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -62,7 +61,6 @@ void enqueue1(Queue *Q, DataType val){
 		printf("ERROR!\n");
 		exit(1);
 	}
-
 	newNode1->next->tag=0;
 	Q->tail->ptrnext = newNode1; //Heritage of the Queue tail: the last Queue tail points to the newNode.
 	Q->tail = newNode1; //The newNode becomes the new tail.
@@ -70,7 +68,6 @@ void enqueue1(Queue *Q, DataType val){
 	newNode1->value = val;
 	newNode1->next->ptrnext = NULL; //Set the new tail's next pointer field to be null.
 	Q->longth++;
-
 }
 
 
@@ -85,7 +82,6 @@ void enqueue2(Queue *Q, DataType val){
 		printf("ERROR!\n");
 		exit(1);
 	}
-
 	newNode2->next->tag=0;
 	newNode2->value = val;
 	newNode2->next->tag=0;
@@ -99,8 +95,8 @@ void enqueue2(Queue *Q, DataType val){
 
 pthread_t thread[2];
 Queue * Qu;
-Qu = initialize(Qu);
 void * thread1(){
+	Qu = initialize(Qu);
 	printf("Enqueue Operation One.");
 	while(Qu->longth<10)
 		enqueue1(Qu,2);
@@ -117,7 +113,6 @@ void * thread2(){
 }
 
 int main(){
-
 	memset(&thread, 0, sizeof(thread));
 	int ret1, ret2;
 	ret1 = pthread_create(&thread[0],NULL,thread1,NULL);
