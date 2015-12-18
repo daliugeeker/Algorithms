@@ -89,9 +89,8 @@ void enqueue2(Queue *Q, DataType val){
 	newPointer2->Tag=0;
 	newPointer2->Ptr->Value = val;
 	newPointer2->Ptr->Next = NULL; //Set the new tail's next pointer field to be null.
-	sleep(10); //Make the thread sleep for 10 seconds.
+
 	Q->Tail->Ptr->Next = newPointer2; //Heritage of the Queue tail: the last Queue tail points to the newNode.
-//	sleep(10); //Make the thread sleep for 10 seconds.
 	Q->Tail = newPointer2; //The newNode becomes the new tail.
 	Q->Longth++;
 }
@@ -123,6 +122,6 @@ int main(){
 	ret1 = pthread_create(&thread[0],NULL,thread1,NULL);
 	ret2 = pthread_create(&thread[1],NULL,thread2,NULL);
 	while(Qu->Longth<10)
-		printf("%d",Qu->Tail->Ptr->Value);
+		printf("%2d\n",Qu->Tail->Ptr->Value);
 	return 0;
 }
