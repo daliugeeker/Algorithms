@@ -1,9 +1,10 @@
 /*
- * Multi-thread Single Queue Operations.c
+ * NonBlockingConcurrentQueue.c
  *
  *  Created on: Dec 11, 2015
  *      Author: liuda
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -17,43 +18,43 @@
 
 typedef int DataType;
 
-typedef struct pointer_t{
-	unsigned int tag;
-	struct pointer_t * volatile ptrnext;
-}Pointer;
-
 typedef struct node_t{
-	DataType value;
-	Pointer * volatile next;
+	DataType Value;
+	struct pointer_t * volatile Next; //The pointer stores the address of next Pointer.
 }Node;
 
+typedef struct pointer_t{
+	unsigned int Tag;
+	Node * volatile Ptr; //The pointer stores the address of the current node.
+}Pointer;
+
 typedef struct queue_t{
-	Pointer * volatile head;
-	Pointer * volatile tail;
-	int longth;
+	Pointer * volatile Head; //The pointer stores the address of the head Pointer of the queue.
+	Pointer * volatile Tail; //The pointer stores the address of the tail Pointer of the queue.
+	int Longth;
 }Queue;
 
 Queue * initialize(Queue * Q){
-
-	Node * volatile node= (Node*)malloc(sizeof(Node));
+	Pointer * volatile pointer= (Pointer*)malloc(sizeof(Pointer));
 	Q = (Queue *)malloc(sizeof(Queue));
-	node->value = 0;
-	node->next->tag =0;
-	node->next->ptrnext=NULL;
-	Q->head = Q->tail = node;
-	Q->longth = 0;
-	if(!Q->head)
+	pointer->Ptr->Value = 0;
+	pointer->Tag = 0;
+	pointer->Ptr->Next = NULL;
+
+	Q->Head = Q->Tail = pointer;
+	Q->Longth = 0;
+	if(!Q->Head)
 		exit(1);
 	else
 		return Q;
 }
 
-Node* volatile newNode1;
+Pointer * volatile newPointer1;
 
 void enqueue1(Queue *Q, DataType val){
-	newNode1 = (Node*)malloc(sizeof(Node));
+	newPointer1 = (Node*)malloc(sizeof(Node));
 //	Q = (Queue *)malloc(sizeof(Queue));
-	if(newNode1 == NULL){
+	if(newPointer1 == NULL){
 		printf("ERROR!\n");
 		exit(1);
 	}
@@ -61,20 +62,22 @@ void enqueue1(Queue *Q, DataType val){
 		printf("ERROR!\n");
 		exit(1);
 	}
-	newNode1->next->tag=0;
-	Q->tail->ptrnext = newNode1; //Heritage of the Queue tail: the last Queue tail points to the newNode.
-	Q->tail = newNode1; //The newNode becomes the new tail.
+
+	newPointer1->Tag=0;
+	newPointer1->Ptr->Value = val;
+	newPointer1->Ptr->Next = NULL; //Set the new tail's next pointer field to be null.
 	sleep(10); //Make the thread sleep for 10 seconds.
-	newNode1->value = val;
-	newNode1->next->ptrnext = NULL; //Set the new tail's next pointer field to be null.
-	Q->longth++;
+	Q->Tail->Ptr->Next = newPointer1; //Heritage of the Queue tail: the last Queue tail points to the newNode.
+//	sleep(10); //Make the thread sleep for 10 seconds.
+	Q->Tail = newPointer1; //The newNode becomes the new tail.
+	Q->Longth++;
 }
 
 
 void enqueue2(Queue *Q, DataType val){
-	Node* volatile newNode2 = (Node*)malloc(sizeof(Node));
+	Pointer * volatile newPointer2 = (Node*)malloc(sizeof(Node));
 //	Q = (Queue *)malloc(sizeof(Queue));
-	if(newNode2 == NULL){
+	if(newPointer2 == NULL){
 		printf("ERROR!\n");
 		exit(1);
 	}
@@ -82,43 +85,44 @@ void enqueue2(Queue *Q, DataType val){
 		printf("ERROR!\n");
 		exit(1);
 	}
-	newNode2->next->tag=0;
-	newNode2->value = val;
-	newNode2->next->tag=0;
 
-	Q->tail->ptrnext = newNode2; //Heritage of the Queue tail: the last Queue tail points to the newNode.
-	Q->tail = newNode2; //The newNode becomes the new tail.
-	newNode2->next->ptrnext = NULL; //Set the new tail's next pointer field to be NULL.
-	Q->longth++;
+	newPointer2->Tag=0;
+	newPointer2->Ptr->Value = val;
+	newPointer2->Ptr->Next = NULL; //Set the new tail's next pointer field to be null.
+	sleep(10); //Make the thread sleep for 10 seconds.
+	Q->Tail->Ptr->Next = newPointer2; //Heritage of the Queue tail: the last Queue tail points to the newNode.
+//	sleep(10); //Make the thread sleep for 10 seconds.
+	Q->Tail = newPointer2; //The newNode becomes the new tail.
+	Q->Longth++;
 }
 /*Employ multiple threads.*/
 
 pthread_t thread[2];
 Queue * Qu;
+
 void * thread1(){
 	Qu = initialize(Qu);
 	printf("Enqueue Operation One.");
-	while(Qu->longth<10)
+	while(Qu->Longth<10)
 		enqueue1(Qu,2);
 	return NULL;
 }
 
 void * thread2(){
-	free(newNode1);
-	Node* volatile newNode2 = (Node*)malloc(sizeof(Node));
+	free(newPointer1);
 	printf("Enqueue Operation Two.");
-	while(Qu->longth<10)
+	while(Qu->Longth<10)
 		enqueue2(Qu,3);
 	return NULL;
 }
 
 int main(){
+
 	memset(&thread, 0, sizeof(thread));
 	int ret1, ret2;
 	ret1 = pthread_create(&thread[0],NULL,thread1,NULL);
 	ret2 = pthread_create(&thread[1],NULL,thread2,NULL);
-
-	if(ret1!=0 && ret2==0)
-		printf("Success!");
+	while(Qu->Longth<10)
+		printf("%d",Qu->Tail->Ptr->Value);
 	return 0;
 }
