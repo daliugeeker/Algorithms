@@ -52,7 +52,7 @@ Queue * initialize(Queue * Q){
 Pointer * volatile newPointer1;
 
 void enqueue1(Queue *Q, DataType val){
-	newPointer1 = (Node*)malloc(sizeof(Node));
+	newPointer1 = (Pointer*)malloc(sizeof(Pointer));
 //	Q = (Queue *)malloc(sizeof(Queue));
 	if(newPointer1 == NULL){
 		printf("ERROR!\n");
@@ -75,7 +75,7 @@ void enqueue1(Queue *Q, DataType val){
 
 
 void enqueue2(Queue *Q, DataType val){
-	Pointer * volatile newPointer2 = (Node*)malloc(sizeof(Node));
+	Pointer * volatile newPointer2 = (Pointer*)malloc(sizeof(Pointer));
 //	Q = (Queue *)malloc(sizeof(Queue));
 	if(newPointer2 == NULL){
 		printf("ERROR!\n");
