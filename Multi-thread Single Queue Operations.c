@@ -13,7 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
-//#define TRUE 1
+#define TRUE 1
 //#define FALSE 0
 
 typedef int DataType;
@@ -66,6 +66,28 @@ void enqueue1(Queue *Q, DataType val){
 	newPointer1->Tag=0;
 	newPointer1->Ptr->Value = val;
 	newPointer1->Ptr->Next = NULL; //Set the new tail's next pointer field to be null.
+
+	Pointer* tail = (Pointer*)malloc(sizeof(Pointer));
+	Pointer* nextPointer = (Pointer*)malloc(sizeof(Pointer));
+//	while(TRUE){
+//		tail = Qu->Tail;
+//		nextPointer = tail->Ptr->Next;
+//		if(tail == Qu->Tail){
+//			if(nextPointer->Ptr == NULL){
+//				if(__sync_bool_compare_and_swap(tail->Ptr->Next,nextPointer,newPointer1)){
+//					nextPointer->Tag++;
+//					break;
+//				}
+//			}
+//			else{
+//				__sync_val_compare_and_swap(Qu->Tail,tail,nextPointer->Ptr);
+//				tail->Tag++;
+//			}
+//		}
+//		__sync_val_compare_and_swap(Qu->Tail,tail,newPointer1)	;
+//		tail->Tag++;
+//	}
+
 	sleep(10); //Make the thread sleep for 10 seconds.
 	Q->Tail->Ptr->Next = newPointer1; //Heritage of the Queue tail: the last Queue tail points to the newNode.
 //	sleep(10); //Make the thread sleep for 10 seconds.
@@ -123,5 +145,8 @@ int main(){
 	ret2 = pthread_create(&thread[1],NULL,thread2,NULL);
 	while(Qu->Longth<10)
 		printf("%2d\n",Qu->Tail->Ptr->Value);
+
+//	free();
+
 	return 0;
 }
