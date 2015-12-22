@@ -65,7 +65,7 @@ void enqueue(Queue * volatile Q, DataType val){
 	Pointer * volatile newPointer = (Pointer*)malloc(sizeof(Pointer));
 	Node * volatile newNode = (Node*)malloc(sizeof(Node));
 
-	newPointer->Tag = 10;
+	newPointer->Tag = 0;
 	newPointer->Ptr = newNode;
 	newNode->Value = val;
 	newNode->Next = newNode->Prev = NULL;
@@ -83,12 +83,15 @@ void enqueue(Queue * volatile Q, DataType val){
 	while(TRUE){
 		tailPointer = Q->Tail; //Read the tail pointer.
 		tailNode = tailPointer->Ptr; //Read the tail node.
-		newNode->Next->Tag++; //The tag of new node's next pointer is set to be one greater than the current tag of the tail pointer.
-		newNode->Next = tailPointer;	
+		newNode->Next = tailPointer;
+		newNode->Next->Tag = tailPointer->Tag+1; //The tag of new node's next pointer is set to be one greater than the current tag of the tail pointer.
+
 		if(__sync_bool_compare_and_swap(&(Q->Tail->Ptr),tailNode,newNode)){
 			tailPointer->Tag++;
 			Q->Longth++;
 			tailNode->Prev = newPointer;
+			tailNode->Prev->Tag = newNode->Next->Tag;
+			Q->Tail = newPointer;
 			break;
 		}
 	}
