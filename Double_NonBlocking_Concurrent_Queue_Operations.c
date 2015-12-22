@@ -45,10 +45,13 @@ Queue * initializeQueue(Queue * volatile Q){
 	node->Prev = NULL;
 	node->Next = NULL;
 
-	Q->Longth = 1;
-	Q->Head->Tag = 0;
-	Q->Head = node;
-	Q->Tail = node;
+	Q->Longth = 0;
+	Q->Head = pointer;
+	Q->Tail = pointer;
+//	Q->Head->Tag = 0;
+//	Q->Tail->Tag = 0;
+//	Q->Head->Ptr = node;
+//	Q->Tail->Ptr = node;
 	return Q;
 }
 
@@ -57,30 +60,36 @@ void enqueue(Queue * volatile Q, DataType val){
 		printf("No Queue exists!");
 		exit(1);
 	}
-	Pointer * tail = (Pointer*)malloc(sizeof(Pointer));
-	Pointer * newPointer = (Pointer*)malloc(sizeof(Pointer));
+	Pointer * volatile tailPointer = (Pointer*)malloc(sizeof(Pointer));
+	Node * volatile tailNode = (Node*)malloc(sizeof(Node));
+	Pointer * volatile newPointer = (Pointer*)malloc(sizeof(Pointer));
 	Node * volatile newNode = (Node*)malloc(sizeof(Node));
 
-	newPointer->Tag = 0;
+	newPointer->Tag = 10;
 	newPointer->Ptr = newNode;
 	newNode->Value = val;
 	newNode->Next = newNode->Prev = NULL;
 
 /* The standard enqueue operation.
  *
-	tail = Q->Tail;
-	tail->Ptr->Next = newPointer;
-	newNode->Prev = tail;
+	tailPointer = Q->Tail;
+	tailNode = tailPointer->Ptr;
+	newNode->Next = tailPointer;
+	tailNode->Prev = newPointer;
 	Q->Tail = newPointer;
 	Q->Longth++;
 */
-
 //	CAS enqueue operation.
 	while(TRUE){
-		tail = Q->Tail;
-
-
+		tailPointer = Q->Tail; //Read the tail pointer.
+		tailNode = tailPointer->Ptr; //Read the tail node.
+		newNode->Next->Tag++; //The tag of new node's next pointer is set to be one greater than the current tag of the tail pointer.
+		newNode->Next = tailPointer;
+		if(__sync_bool_compare_and_swap(&(Q->Tail->Ptr),tailNode,newNode)){
+			tailPointer->Tag++;
+			Q->Longth++;
+			tailNode->Prev = newPointer;
+			break;
+		}
 	}
 }
-
-
