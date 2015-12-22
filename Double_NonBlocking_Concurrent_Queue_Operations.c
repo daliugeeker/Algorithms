@@ -84,7 +84,7 @@ void enqueue(Queue * volatile Q, DataType val){
 		tailPointer = Q->Tail; //Read the tail pointer.
 		tailNode = tailPointer->Ptr; //Read the tail node.
 		newNode->Next->Tag++; //The tag of new node's next pointer is set to be one greater than the current tag of the tail pointer.
-		newNode->Next = tailPointer;
+		newNode->Next = tailPointer;	
 		if(__sync_bool_compare_and_swap(&(Q->Tail->Ptr),tailNode,newNode)){
 			tailPointer->Tag++;
 			Q->Longth++;
@@ -93,3 +93,5 @@ void enqueue(Queue * volatile Q, DataType val){
 		}
 	}
 }
+
+
