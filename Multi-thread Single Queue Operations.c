@@ -95,16 +95,19 @@ typedef struct queue_t{
 	int Longth;
 }Queue;
 
-Queue * initialize(Queue * volatile Q){
+Queue * initialize(){
 	Pointer * volatile pointer= (Pointer*)malloc(sizeof(Pointer));
 	Node * volatile node = (Node*)malloc(sizeof(Node));
-	Q = (Queue *)malloc(sizeof(Queue));
-	pointer->Ptr->Value = 0;
+	Queue * volatile Q = (Queue *)malloc(sizeof(Queue));
+	pointer->Ptr = node;
 	pointer->Tag = 0;
-	pointer->Ptr->Next = NULL;
+	node->Value = NULL;
+	node->Next = NULL;
 
-	Q->Head = Q->Tail = pointer;
-	Q->Longth = 1;
+//	Q->Head = Q->Tail = pointer;
+	Q->Head->Ptr = Q->Tail->Ptr = node;
+	Q->Head->Tag = Q->Tail->Tag = 0;
+	Q->Longth = 0;
 	if(!Q->Head)
 		exit(1);
 	else
@@ -112,11 +115,18 @@ Queue * initialize(Queue * volatile Q){
 }
 
 Pointer * volatile newPointer1;
-
+Node * volatile newNode1;
 void enqueue1(Queue * volatile Q, DataType val){
 	newPointer1 = (Pointer*)malloc(sizeof(Pointer));
-//	Q = (Queue *)malloc(sizeof(Queue));
+	newNode1 = (Node*)malloc(sizeof(Node));
+	Pointer * tailPointer = (Pointer*)malloc(sizeof(Pointer));
+	Node * tailNode = (Node*)malloc(sizeof(Node));
+
 	if(newPointer1 == NULL){
+		printf("ERROR!\n");
+		exit(1);
+	}
+	if(newNode1 == NULL){
 		printf("ERROR!\n");
 		exit(1);
 	}
@@ -126,19 +136,20 @@ void enqueue1(Queue * volatile Q, DataType val){
 	}
 
 	newPointer1->Tag=0;
-	newPointer1->Ptr->Value = val;
-	newPointer1->Ptr->Next = NULL; //Set the new tail's next pointer field to be null.
+	newPointer1->Ptr = newNode1;
+	newNode1->Value = val;
+	newNode1->Next = NULL; //Set the new tail's next pointer field to be null.
 
-	Pointer* tail = (Pointer*)malloc(sizeof(Pointer));
-	Pointer* nextPointer = (Pointer*)malloc(sizeof(Pointer));
+
 	while(TRUE){
-		tail = Q->Tail;
-		sleep(10);
-		nextPointer = tail->Ptr->Next;
-		if(tail == Q->Tail){
-			if(nextPointer->Ptr == NULL){
-				if(__sync_bool_compare_and_swap(&tail->Ptr->Next,nextPointer,newPointer1)){
-					nextPointer->Tag++;
+		tailPointer = Q->Tail; //Read the current tail pointer of the queue.
+		tailNode = tailPointer->Ptr;
+		unsigned int tailTag = tailPointer->Tag;
+//		sleep(10); //Sleep for ten seconds.
+		if(tailPointer == Q->Tail){
+			if(tailNode->Next == NULL){
+				if(__sync_bool_compare_and_swap(&(tailNode->Next),nextPointer,newPointer1)){
+					nextPointer1->Tag++;
 					break;
 				}
 			}
@@ -147,7 +158,7 @@ void enqueue1(Queue * volatile Q, DataType val){
 				tail->Tag++;
 			}
 		}
-		__sync_boo_compare_and_swap(&Q->Tail,tail,newPointer1)	;
+		__sync_bool_compare_and_swap(&Q->Tail,tail,newPointer1)	;
 		tail->Tag++;
 	}
 
