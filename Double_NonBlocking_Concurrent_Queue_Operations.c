@@ -1,5 +1,5 @@
 /*
- * NonBlockingConcurrentQueue.c
+ * Double_NonBlocking_Concurrent_Queue_Operations.c
  *
  *  Created on: Dec 9, 2015
  *      Author: liuda
@@ -41,17 +41,17 @@ Queue * initializeQueue(Queue * volatile Q){
 	Q = (Queue*)malloc(sizeof(Queue));
 	pointer->Tag = 0;
 	pointer->Ptr = node;
-	node->Value = 0;
+	node->Value = -1;
 	node->Prev = NULL;
 	node->Next = NULL;
 
 	Q->Longth = 0;
 	Q->Head = pointer;
 	Q->Tail = pointer;
-//	Q->Head->Tag = 0;
-//	Q->Tail->Tag = 0;
-//	Q->Head->Ptr = node;
-//	Q->Tail->Ptr = node;
+	Q->Head->Tag = 0;
+	Q->Tail->Tag = 0;
+	Q->Head->Ptr = node;
+	Q->Tail->Ptr = node;
 	return Q;
 }
 
@@ -69,8 +69,10 @@ void enqueue(Queue * volatile Q, DataType val){
 	newPointer->Ptr = newNode;
 	newNode->Value = val;
 	newNode->Next = newNode->Prev = NULL;
+//	newNode->Next->Ptr = newNode->Prev->Ptr = NULL;
+//	newNode->Next->Tag = newNode->Prev->Tag = NULL;
 
-/* The standard enqueue operation.
+/* The standard enqueue operations.
  *
 	tailPointer = Q->Tail;
 	tailNode = tailPointer->Ptr;
@@ -79,22 +81,23 @@ void enqueue(Queue * volatile Q, DataType val){
 	Q->Tail = newPointer;
 	Q->Longth++;
 */
-//	CAS enqueue operation.
+//	CAS enqueue operations.
 	while(TRUE){
-		tailPointer = Q->Tail; //Read the tail pointer.
+		tailPointer = Q->Tail; //Read the tail pointer, with the tag is 0.
 		tailNode = tailPointer->Ptr; //Read the tail node.
-		newNode->Next = tailPointer;
-		newNode->Next->Tag = tailPointer->Tag+1; //The tag of new node's next pointer is set to be one greater than the current tag of the tail pointer.
-
-		if(__sync_bool_compare_and_swap(&(Q->Tail->Ptr),tailNode,newNode)){
-			tailPointer->Tag++;
-			Q->Longth++;
-			tailNode->Prev = newPointer;
-			tailNode->Prev->Tag = newNode->Next->Tag;
-			Q->Tail = newPointer;
+		newNode->Next->Ptr = tailPointer->Ptr; //Store the new node's next pointer.
+		newNode->Next->Tag = tailPointer->Tag+1; //The tag of new node's next pointer is set to be 1, and 1 greater than the current tag of the tail pointer.
+//		sleep(10); //Hang the thread up for 10 seconds. And the ABA problem would occur at this circumstance.
+		if(__sync_bool_compare_and_swap(&(Q->Tail),&tailPointer,&newPointer)){
+			tailPointer->Tag++; //The tag is incremented to be 1.
+			Q->Longth++; //The length of Queue is incremented by 1.
+			tailNode->Prev = newPointer; //In fact, the ABA problem would also occur at this step.
+			tailNode->Prev->Tag = newNode->Next->Tag; // Set all the tags of the operated pointers to be 1, as to be same.
 			break;
 		}
 	}
+	free(newNode);
+	free(newPointer);
 }
 
 
