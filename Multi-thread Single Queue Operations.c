@@ -86,7 +86,7 @@ typedef struct node_t{
 
 typedef struct pointer_t{
 	unsigned int Tag;
-	Node * volatile Ptr; //The pointer stores the address of the current node.
+	struct node_t * volatile Ptr; //The pointer stores the address of the current node.
 }Pointer;
 
 typedef struct queue_t{
@@ -95,18 +95,18 @@ typedef struct queue_t{
 	int Longth;
 }Queue;
 
-Queue * initialize(){
+Queue * initializeQueue(){
 	Pointer * volatile pointer= (Pointer*)malloc(sizeof(Pointer));
 	Node * volatile node = (Node*)malloc(sizeof(Node));
 	Queue * volatile Q = (Queue *)malloc(sizeof(Queue));
 	pointer->Ptr = node;
 	pointer->Tag = 0;
-	node->Value = NULL;
+	node->Value = -1;
 	node->Next = NULL;
 
-//	Q->Head = Q->Tail = pointer;
-	Q->Head->Ptr = Q->Tail->Ptr = node;
-	Q->Head->Tag = Q->Tail->Tag = 0;
+	Q->Head = Q->Tail = pointer;
+//	Q->Head->Ptr = Q->Tail->Ptr = node;
+//	Q->Head->Tag = Q->Tail->Tag = 0;
 	Q->Longth = 0;
 	if(!Q->Head)
 		exit(1);
@@ -121,7 +121,7 @@ void enqueue1(Queue * volatile Q, DataType val){
 	newNode1 = (Node*)malloc(sizeof(Node));
 	Pointer * tailPointer = (Pointer*)malloc(sizeof(Pointer));
 	Node * tailNode = (Node*)malloc(sizeof(Node));
-
+	Pointer * nextPointer = (Pointer*)malloc(sizeof(Pointer));
 	if(newPointer1 == NULL){
 		printf("ERROR!\n");
 		exit(1);
@@ -140,42 +140,52 @@ void enqueue1(Queue * volatile Q, DataType val){
 	newNode1->Value = val;
 	newNode1->Next = NULL; //Set the new tail's next pointer field to be null.
 
-
 	while(TRUE){
 		tailPointer = Q->Tail; //Read the current tail pointer of the queue.
 		tailNode = tailPointer->Ptr;
-		unsigned int tailTag = tailPointer->Tag;
+		nextPointer = tailNode->Next;
 //		sleep(10); //Sleep for ten seconds.
 		if(tailPointer == Q->Tail){
 			if(tailNode->Next == NULL){
-				if(__sync_bool_compare_and_swap(&(tailNode->Next),nextPointer,newPointer1)){
-					nextPointer1->Tag++;
+				if(__sync_bool_compare_and_swap(&(tailNode->Next),&nextPointer,&newPointer1) && (tailNode->Next->Tag == nextPointer->Tag)){
+					newPointer1->Tag++;
 					break;
 				}
 			}
 			else{
-				__sync_bool_compare_and_swap(&Q->Tail,tail,nextPointer->Ptr);
-				tail->Tag++;
+				__sync_bool_compare_and_swap(&(Q->Tail),&tailPointer,&nextPointer);
+				tailPointer->Tag++;
 			}
 		}
-		__sync_bool_compare_and_swap(&Q->Tail,tail,newPointer1)	;
-		tail->Tag++;
+		__sync_bool_compare_and_swap(&Q->Tail,tailPointer,newPointer1);
+		tailPointer->Tag++;
+		Q->Longth++;
 	}
-
+/*
+ * The standard enqueue operation.
+ */
 //	sleep(10); //Make the thread sleep for 10 seconds.
 //	Q->Tail->Ptr->Next = newPointer1; //Heritage of the Queue tail: the last Queue tail points to the newNode.
-////	sleep(10); //Make the thread sleep for 10 seconds.
+//  sleep(10); //Make the thread sleep for 10 seconds.
 //	Q->Tail = newPointer1; //The newNode becomes the new tail.
 //	Q->Longth++;
-}
 
+	free(nextPointer);
+	free(newNode1);
+	free(newPointer1);
+}
 
 void enqueue2(Queue * volatile Q, DataType val){
 	Pointer * volatile newPointer2 = (Pointer*)malloc(sizeof(Pointer));
+	Node * volatile newNode2 = (Node*)malloc(sizeof(Node));
 //	Q = (Queue *)malloc(sizeof(Queue));
 	if(newPointer2 == NULL){
 		printf("ERROR!\n");
 		exit(1);
+	}
+	if(newNode2 == NULL){
+			printf("ERROR!\n");
+			exit(1);
 	}
 	if(Q == NULL){
 		printf("ERROR!\n");
@@ -183,12 +193,16 @@ void enqueue2(Queue * volatile Q, DataType val){
 	}
 
 	newPointer2->Tag=0;
-	newPointer2->Ptr->Value = val;
-	newPointer2->Ptr->Next = NULL; //Set the new tail's next pointer field to be null.
+	newPointer2->Ptr = newNode2;
+	newNode2->Value = val;
+	newNode2->Next = NULL; //Set the new tail's next pointer field to be null.
 
 	Q->Tail->Ptr->Next = newPointer2; //Heritage of the Queue tail: the last Queue tail points to the newNode.
 	Q->Tail = newPointer2; //The newNode becomes the new tail.
 	Q->Longth++;
+
+	free(newPointer2);
+	free(newNode2);
 }
 /*Employ multiple threads.*/
 
@@ -196,7 +210,7 @@ pthread_t thread[2];
 Queue * Qu;
 
 void * thread1(){
-	Qu = initialize(Qu);
+	Qu = initializeQueue();
 	printf("Enqueue Operation One.");
 	while(Qu->Longth<10)
 		enqueue1(Qu,2);
