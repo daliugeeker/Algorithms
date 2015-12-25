@@ -48,10 +48,10 @@ Queue * initializeQueue(Queue * volatile Q){
 	Q->Longth = 0;
 	Q->Head = pointer;
 	Q->Tail = pointer;
-	Q->Head->Tag = 0;
-	Q->Tail->Tag = 0;
-	Q->Head->Ptr = node;
-	Q->Tail->Ptr = node;
+//	Q->Head->Tag = 0;
+//	Q->Tail->Tag = 0;
+//	Q->Head->Ptr = node;
+//	Q->Tail->Ptr = node;
 	return Q;
 }
 
@@ -88,16 +88,16 @@ void enqueue(Queue * volatile Q, DataType val){
 		newNode->Next->Ptr = tailPointer->Ptr; //Store the new node's next pointer.
 		newNode->Next->Tag = tailPointer->Tag+1; //The tag of new node's next pointer is set to be 1, and 1 greater than the current tag of the tail pointer.
 //		sleep(10); //Hang the thread up for 10 seconds. And the ABA problem would occur at this circumstance.
-		if(__sync_bool_compare_and_swap(&(Q->Tail),&tailPointer,&newPointer)){
-			tailPointer->Tag++; //The tag is incremented to be 1.
-			Q->Longth++; //The length of Queue is incremented by 1.
-			tailNode->Prev = newPointer; //In fact, the ABA problem would also occur at this step.
-			tailNode->Prev->Tag = newNode->Next->Tag; // Set all the tags of the operated pointers to be 1, as to be same.
-			break;
+		if(tailPointer == Q->Tail){
+			if(__sync_bool_compare_and_swap(&(Q->Tail),&tailPointer,&newPointer) && (Q->Tail->Tag == tailPointer->Tag)){
+				tailPointer->Tag++; //The tag is incremented to be 1.
+				Q->Longth++; //The length of Queue is incremented by 1.
+				tailNode->Prev = newPointer; //In fact, the ABA problem would also occur at this step.
+				tailNode->Prev->Tag = newNode->Next->Tag; //Set all the tags of the operated pointers to be 1, as to be same.
+				break;
+			}
 		}
 	}
 	free(newNode);
 	free(newPointer);
 }
-
-
