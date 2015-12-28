@@ -4,7 +4,6 @@
  *  Created on: Dec 9, 2015
  *      Author: liuda
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -36,12 +35,12 @@ typedef struct queue_t{
 }Queue;
 
 Queue * initializeQueue(Queue * volatile Q){
-	Node * volatile node = (Node*)malloc(sizeof(Node));
 	Pointer* volatile pointer = (Pointer*)sizeof(Pointer);
+	Node * volatile node = (Node*)malloc(sizeof(Node));
 	Q = (Queue*)malloc(sizeof(Queue));
 	pointer->Tag = 0;
 	pointer->Ptr = node;
-	node->Value = -1;
+	node->Value = -100;
 	node->Prev = NULL;
 	node->Next = NULL;
 
@@ -52,18 +51,26 @@ Queue * initializeQueue(Queue * volatile Q){
 //	Q->Tail->Tag = 0;
 //	Q->Head->Ptr = node;
 //	Q->Tail->Ptr = node;
-	return Q;
+	if(!Q->Head || !Q->Tail)
+		exit(1);
+	else{
+		printf("initializeQueue success!");
+		return Q;
+	}
 }
 
-void enqueue(Queue * volatile Q, DataType val){
+
+Pointer * volatile newPointer;
+Node * volatile newNode;
+void enqueue(Queue * volatile Q, DataType val, int SleepTime){
 	if(Q == NULL){
 		printf("No Queue exists!");
 		exit(1);
 	}
 	Pointer * volatile tailPointer = (Pointer*)malloc(sizeof(Pointer));
 	Node * volatile tailNode = (Node*)malloc(sizeof(Node));
-	Pointer * volatile newPointer = (Pointer*)malloc(sizeof(Pointer));
-	Node * volatile newNode = (Node*)malloc(sizeof(Node));
+	newPointer = (Pointer*)malloc(sizeof(Pointer));
+	newNode = (Node*)malloc(sizeof(Node));
 
 	newPointer->Tag = 0;
 	newPointer->Ptr = newNode;
@@ -81,13 +88,16 @@ void enqueue(Queue * volatile Q, DataType val){
 	Q->Tail = newPointer;
 	Q->Longth++;
 */
+
 //	CAS enqueue operations.
 	while(TRUE){
 		tailPointer = Q->Tail; //Read the tail pointer, with the tag is 0.
 		tailNode = tailPointer->Ptr; //Read the tail node.
 		newNode->Next->Ptr = tailPointer->Ptr; //Store the new node's next pointer.
 		newNode->Next->Tag = tailPointer->Tag+1; //The tag of new node's next pointer is set to be 1, and 1 greater than the current tag of the tail pointer.
-//		sleep(10); //Hang the thread up for 10 seconds. And the ABA problem would occur at this circumstance.
+
+		sleep(SleepTime); //Hang the thread up for 10 seconds. And the ABA problem would occur at this circumstance.
+
 		if(tailPointer == Q->Tail){
 			if(__sync_bool_compare_and_swap(&(Q->Tail),&tailPointer,&newPointer) && (Q->Tail->Tag == tailPointer->Tag)){
 				tailPointer->Tag++; //The tag is incremented to be 1.
@@ -101,3 +111,34 @@ void enqueue(Queue * volatile Q, DataType val){
 	free(newNode);
 	free(newPointer);
 }
+
+pthread_t thread[2];
+Queue * Qu;
+
+void * thread1(){
+	printf("Enqueue Operation One.\n");
+	enqueue(Qu, 13, 10);
+	return NULL;
+}
+
+void * thread2(){
+	printf("Enqueue Operation Tow.\n");
+	enqueue(Qu, 17, 0);
+	return NULL;
+}
+
+
+int main(){
+	Qu = initializeQueue(Qu);
+
+	int ret1, ret2;
+	ret1 = pthread_create(&thread[0],NULL,thread1,NULL);
+	ret2 = pthread_create(&thread[1],NULL,thread2,NULL);
+	printf("Thread one runs:%d\n",ret1);
+	printf("Thread two runs:%d\n",ret2);
+
+//	free();
+	return 0;
+}
+
+
