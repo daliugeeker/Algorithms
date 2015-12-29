@@ -87,6 +87,9 @@ void enqueue(Queue * volatile Q, DataType val, int SleepTime){
 	tailNode->Prev = newPointer;
 	Q->Tail = newPointer;
 	Q->Longth++;
+
+	free(tailNode);
+	free(tailPointer);
 */
 
 //	CAS enqueue operations.
@@ -107,6 +110,8 @@ void enqueue(Queue * volatile Q, DataType val, int SleepTime){
 				break;
 			}
 		}
+		free(tailNode);
+		free(tailPointer);
 	}
 	free(newNode);
 	free(newPointer);
